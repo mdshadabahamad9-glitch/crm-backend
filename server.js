@@ -27,6 +27,8 @@ const db = mysql.createPool({
   database: process.env.DB_NAME,
   port: 3306,
 });
+const taskRoutes = require("./routes/tasks")(db);
+app.use("/api/tasks", taskRoutes);
 
 // Route: get all leads
 app.get("/api/leads", async (req, res) => {
