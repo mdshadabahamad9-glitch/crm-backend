@@ -72,7 +72,8 @@ app.post("/api/leads/update-status", async (req, res) => {
 // Route: add new lead
 app.post("/api/leads/add", async (req, res) => {
   try {
-    const { name, email, phone, status = "New", lead_stage = "NEW_LEAD" } = req.body;
+    const { name, email, phone, status = "New", lead_stage = "NEW_LEAD",      price
+ } = req.body;
 
     if (!name || !email || !phone) {
       return res
@@ -80,9 +81,11 @@ app.post("/api/leads/add", async (req, res) => {
         .json({ success: false, message: "Name, email, and phone are required" });
     }
 
+    const dealValue = parseFloat(price) || 0;
+
     const [result] = await db.query(
-      "INSERT INTO leads (name, email, phone, status, lead_stage, last_contacted) VALUES (?, ?, ?, ?, ?, NOW())",
-      [name, email, phone, status, lead_stage]
+      "INSERT INTO leads (name, email, phone, status, lead_stage,price, last_contacted) VALUES (?, ?, ?, ?, ?, NOW())",
+      [name, email, phone, status, lead_stage, dealValue]
     );
 
     const newLead = {
@@ -93,6 +96,8 @@ app.post("/api/leads/add", async (req, res) => {
       status,
       lead_stage,
       last_contacted: new Date(), // send current timestamp
+      dealValue,
+
     };
 
     res.json(newLead);
