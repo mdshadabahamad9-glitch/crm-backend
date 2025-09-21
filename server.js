@@ -84,7 +84,7 @@ app.post("/api/leads/add", async (req, res) => {
     const dealValue = parseFloat(price) || 0;
 
     const [result] = await db.query(
-      "INSERT INTO leads (name, email, phone, status, lead_stage,price, last_contacted) VALUES (?, ?, ?, ?, ?, NOW())",
+      "INSERT INTO leads (name, email, phone, status, lead_stage,price, last_contacted) VALUES (?, ?, ?, ?, ?,?, NOW())",
       [name, email, phone, status, lead_stage, dealValue]
     );
 
