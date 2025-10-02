@@ -155,11 +155,17 @@ router.post("/forgot-password", async (req, res) => {
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        user: "mdshadabahamad9@gmail.com",
-        pass: "nple vrzi wysg nkuv",
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_PASS,
       },
     });
-
+    transporter.verify((err, success) => {
+      if (err) {
+        console.error("SMTP error:", err);
+      } else {
+        console.log("SMTP is ready:", success);
+      }
+    });
     // Send new password via email
     await transporter.sendMail({
       from: `"CRM Support" <mdshadabahamad9@gmail.com>`,
