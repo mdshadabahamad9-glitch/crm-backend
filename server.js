@@ -3,6 +3,8 @@ const mysql = require("mysql2/promise");
 const cors = require("cors");
 const authRoutes = require("./auth");
 
+require("dotenv").config(); // <-- MUST be at the very top
+
 const app = express();
 const PORT = process.env.PORT || 4000;
 
@@ -27,8 +29,6 @@ const db = mysql.createPool({
   database: process.env.DB_NAME,
   port: 3306,
 });
-const taskRoutes = require("./task")(db);
-app.use("/api/tasks", taskRoutes);
 
 // Route: get all leads
 app.get("/api/leads", async (req, res) => {
@@ -40,6 +40,9 @@ app.get("/api/leads", async (req, res) => {
     res.status(500).json({ error: "Database error" });
   }
 });
+
+const taskRoutes = require("./task")(db);
+app.use("/api/tasks", taskRoutes);
 
 // Route: update lead status
 app.post("/api/leads/update-status", async (req, res) => {
@@ -72,19 +75,25 @@ app.post("/api/leads/update-status", async (req, res) => {
 // Route: add new lead
 app.post("/api/leads/add", async (req, res) => {
   try {
-    const { name, email, phone, status = "New", lead_stage = "NEW_LEAD",      price
- } = req.body;
+    const {
+      name,
+      email,
+      phone,
+      status = "New",
+      lead_stage = "NEW_LEAD",
+      price,
+    } = req.body;
 
     if (!name || !email || !phone) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Name, email, and phone are required" });
+      return res.status(400).json({
+        success: false,
+        message: "Name, email, and phone are required",
+      });
     }
-
     const dealValue = parseFloat(price) || 0;
 
     const [result] = await db.query(
-      "INSERT INTO leads (name, email, phone, status, lead_stage,price, last_contacted) VALUES (?, ?, ?, ?, ?,?, NOW())",
+      "INSERT INTO leads (name, email, phone, status, lead_stage,price, last_contacted) VALUES (?, ?, ?, ?, ?, NOW())",
       [name, email, phone, status, lead_stage, dealValue]
     );
 
@@ -96,8 +105,6 @@ app.post("/api/leads/add", async (req, res) => {
       status,
       lead_stage,
       last_contacted: new Date(), // send current timestamp
-      dealValue,
-
     };
 
     res.json(newLead);
