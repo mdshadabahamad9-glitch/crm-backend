@@ -162,7 +162,7 @@ router.post("/forgot-password", async (req, res) => {
 
     // Send new password via email
     await transporter.sendMail({
-      from: `"CRM Support" <${process.env.GMAIL_USER}>`,
+      from: `"CRM Support" <mdshadabahamad9@gmail.com>`,
       to: email,
       subject: "Your New Password",
       html: `<p>Hello ${user.name},</p>
