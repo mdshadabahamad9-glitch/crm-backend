@@ -2,6 +2,9 @@ const express = require("express");
 const bcrypt = require("bcryptjs"); // for password hashing
 const jwt = require("jsonwebtoken");
 const mysql = require("mysql2/promise");
+const nodemailer = require("nodemailer");
+
+require("dotenv").config(); // <-- MUST be at the very top
 
 const router = express.Router();
 
@@ -19,6 +22,7 @@ const JWT_SECRET = "yourjwtsecret"; // ❗ move to .env in production
 // ✅ Login route
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
+  console.log("hiiii", dbConfig);
 
   try {
     const connection = await mysql.createConnection(dbConfig);
@@ -76,6 +80,7 @@ router.post("/register", async (req, res) => {
       [email]
     );
     if (rows.length > 0) {
+      await connection.end();
       return res.status(400).json({ error: "Email already exists" });
     }
 
@@ -89,7 +94,84 @@ router.post("/register", async (req, res) => {
     );
     await connection.end();
 
-    res.json({ message: "User registered successfully" });
+    // Configure Gmail transporter
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: "mdshadabahamad9@gmail.com",
+        pass: "nple vrzi wysg nkuv",
+      },
+    });
+
+    // Send password via email
+    await transporter.sendMail({
+      from: `"CRM Support" <${process.env.GMAIL_USER}>`,
+      to: email,
+      subject: "Your Account Password",
+      html: `<p>Hello ${name},</p>
+             <p>Thank you for registering. Your password is:</p>
+             <b>${password}</b>
+             <p>Please keep it safe and change it after logging in.</p>`,
+    });
+
+    res.json({
+      message: "User registered successfully. Password sent to email.",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+router.post("/forgot-password", async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const connection = await mysql.createConnection(dbConfig);
+    const [rows] = await connection.execute(
+      "SELECT * FROM users WHERE email = ?",
+      [email]
+    );
+
+    if (rows.length === 0) {
+      await connection.end();
+      return res.status(400).json({ error: "Email not found" });
+    }
+
+    const user = rows[0];
+
+    // Generate random new password
+    const newPassword = Math.random().toString(36).slice(-8); // e.g., 8 chars
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update DB with new hashed password
+    await connection.execute("UPDATE users SET password=? WHERE email=?", [
+      hashedPassword,
+      email,
+    ]);
+    await connection.end();
+
+    // Configure Gmail transporter
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: "mdshadabahamad9@gmail.com",
+        pass: "nple vrzi wysg nkuv",
+      },
+    });
+
+    // Send new password via email
+    await transporter.sendMail({
+      from: `"CRM Support" <${process.env.GMAIL_USER}>`,
+      to: email,
+      subject: "Your New Password",
+      html: `<p>Hello ${user.name},</p>
+             <p>Your password has been reset. Your new password is:</p>
+             <b>${newPassword}</b>
+             <p>Please log in and change it after logging in.</p>`,
+    });
+
+    res.json({ message: "New password sent to your email" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
