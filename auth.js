@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs"); // for password hashing
 const jwt = require("jsonwebtoken");
 const mysql = require("mysql2/promise");
 const nodemailer = require("nodemailer");
+const Brevo = require("@getbrevo/brevo");
 
 require("dotenv").config(); // <-- MUST be at the very top
 
@@ -123,13 +124,19 @@ router.post("/register", async (req, res) => {
   }
 });
 
+const brevo = new Brevo.TransactionalEmailsApi();
+brevo.setApiKey(
+  Brevo.TransactionalEmailsApiApiKeys.apiKey,
+  "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"
+);
+
 router.post("/forgot-password", async (req, res) => {
   const { email } = req.body;
 
   try {
     const connection = await mysql.createConnection(dbConfig);
     const [rows] = await connection.execute(
-      "SELECT * FROM users WHERE email = ?",
+      "SELECT * FROM users WHERE email=?",
       [email]
     );
 
@@ -140,36 +147,30 @@ router.post("/forgot-password", async (req, res) => {
 
     const user = rows[0];
 
-    // Generate random new password
-    const newPassword = Math.random().toString(36).slice(-8); // e.g., 8 chars
+    // Generate and hash new password
+    const newPassword = Math.random().toString(36).slice(-8);
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Update DB with new hashed password
     await connection.execute("UPDATE users SET password=? WHERE email=?", [
       hashedPassword,
       email,
     ]);
     await connection.end();
 
-    // Configure Gmail transporter
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: "mdshadabahamad9@gmail.com",
-        pass: "nple vrzi wysg nkuv",
-      },
-    });
+    // Send email with Brevo
+    const sendSmtpEmail = new Brevo.SendSmtpEmail();
+    sendSmtpEmail.sender = {
+      name: "CRM Support",
+      email: "mdshadabahamad9@gmail.com",
+    }; // can use your Gmail here
+    sendSmtpEmail.to = [{ email: email, name: user.name }];
+    sendSmtpEmail.subject = "Your New Password";
+    sendSmtpEmail.htmlContent = `<p>Hello ${user.name},</p>
+                                <p>Your password has been reset. Your new password is:</p>
+                                <b>${newPassword}</b>
+                                <p>Please log in and change it after logging in.</p>`;
 
-    // Send new password via email
-    await transporter.sendMail({
-      from: `"CRM Support" <mdshadabahamad9@gmail.com>`,
-      to: email,
-      subject: "Your New Password",
-      html: `<p>Hello ${user.name},</p>
-             <p>Your password has been reset. Your new password is:</p>
-             <b>${newPassword}</b>
-             <p>Please log in and change it after logging in.</p>`,
-    });
+    await brevo.sendTransacEmail(sendSmtpEmail);
 
     res.json({ message: "New password sent to your email" });
   } catch (err) {
