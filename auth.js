@@ -127,7 +127,7 @@ router.post("/register", async (req, res) => {
 const brevo = new Brevo.TransactionalEmailsApi();
 brevo.setApiKey(
   Brevo.TransactionalEmailsApiApiKeys.apiKey,
-  "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"
+  "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"
 );
 
 router.post("/forgot-password", async (req, res) => {
