@@ -67,6 +67,11 @@ router.post("/login", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+const brevo = new Brevo.TransactionalEmailsApi();
+brevo.setApiKey(
+  Brevo.TransactionalEmailsApiApiKeys.apiKey,
+process.env.BREVO_API_KEY);
+
 
 // ✅ Register route (optional)
 router.post("/register", async (req, res) => {
@@ -95,25 +100,20 @@ router.post("/register", async (req, res) => {
     );
     await connection.end();
 
-    // Configure Gmail transporter
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: "mdshadabahamad9@gmail.com",
-        pass: "nple vrzi wysg nkuv",
-      },
-    });
+    // Send email with Brevo
+    const sendSmtpEmail = new Brevo.SendSmtpEmail();
+    sendSmtpEmail.sender = {
+      name: "CRM Support",
+      email: "mdshadabahamad9@gmail.com", // you can use your support email
+    };
+    sendSmtpEmail.to = [{ email, name }];
+    sendSmtpEmail.subject = "Welcome! Your Account Password";
+    sendSmtpEmail.htmlContent = `<p>Hello ${name},</p>
+                                <p>Thank you for registering. Your password is:</p>
+                                <b>${password}</b>
+                                <p>Please keep it safe and change it after logging in.</p>`;
 
-    // Send password via email
-    await transporter.sendMail({
-      from: `"CRM Support" <${process.env.GMAIL_USER}>`,
-      to: email,
-      subject: "Your Account Password",
-      html: `<p>Hello ${name},</p>
-             <p>Thank you for registering. Your password is:</p>
-             <b>${password}</b>
-             <p>Please keep it safe and change it after logging in.</p>`,
-    });
+    await brevo.sendTransacEmail(sendSmtpEmail);
 
     res.json({
       message: "User registered successfully. Password sent to email.",
@@ -124,10 +124,6 @@ router.post("/register", async (req, res) => {
   }
 });
 
-const brevo = new Brevo.TransactionalEmailsApi();
-brevo.setApiKey(
-  Brevo.TransactionalEmailsApiApiKeys.apiKey,
-process.env.BREVO_API_KEY);
 
 router.post("/forgot-password", async (req, res) => {
   const { email } = req.body;
