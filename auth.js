@@ -108,10 +108,45 @@ router.post("/register", async (req, res) => {
     };
     sendSmtpEmail.to = [{ email, name }];
     sendSmtpEmail.subject = "Welcome! Your Account Password";
-    sendSmtpEmail.htmlContent = `<p>Hello ${name},</p>
-                                <p>Thank you for registering. Your password is:</p>
-                                <b>${password}</b>
-                                <p>Please keep it safe and change it after logging in.</p>`;
+      sendSmtpEmail.htmlContent = `
+<div style="max-width:600px;margin:auto;font-family:Arial,sans-serif;padding:20px;background:#f7f7f9;border-radius:8px;border:1px solid #e0e0e0;">
+
+  <div style="text-align:center;margin-bottom:20px;">
+    <h1 style="color:#4f46e5;margin:0;font-size:28px;">Welcome to Desynefy!</h1>
+    <p style="color:#555;font-size:14px;margin:5px 0 0;">We’re thrilled to have you on board 🎉</p>
+  </div>
+
+  <div style="padding:20px;background:#ffffff;border-radius:8px;border:1px solid #ddd;">
+    <p style="color:#333;font-size:16px;">Hello <strong>${name}</strong>,</p>
+    <p style="color:#333;font-size:16px;">
+      Thank you for registering with Desynefy! We’re excited to have you join our community.
+    </p>
+
+    <p style="color:#333;font-size:16px;">
+      Here’s your temporary password to get started:
+    </p>
+
+    <p style="text-align:center;margin:20px 0;">
+      <span style="display:inline-block;background-color:#4f46e5;color:#ffffff;font-size:18px;padding:10px 20px;border-radius:5px;font-weight:bold;">
+        ${password}
+      </span>
+    </p>
+
+    <p style="color:#333;font-size:16px;">
+      Please log in and change it to something memorable. Enjoy exploring Desynefy!
+    </p>
+
+    <p style="color:#888;font-size:14px;margin-top:20px;">
+      If you have any questions, our support team is always ready to help.
+    </p>
+  </div>
+
+  <div style="text-align:center;margin-top:20px;color:#555;font-size:12px;">
+    &copy; ${new Date().getFullYear()} Desynefy. All rights reserved.
+  </div>
+
+</div>
+`;
 
     await brevo.sendTransacEmail(sendSmtpEmail);
 
@@ -160,10 +195,34 @@ router.post("/forgot-password", async (req, res) => {
     }; // can use your Gmail here
     sendSmtpEmail.to = [{ email: email, name: user.name }];
     sendSmtpEmail.subject = "Your New Password";
-    sendSmtpEmail.htmlContent = `<p>Hello ${user.name},</p>
-                                <p>Your password has been reset. Your new password is:</p>
-                                <b>${newPassword}</b>
-                                <p>Please log in and change it after logging in.</p>`;
+   sendSmtpEmail.htmlContent = `<div style="max-width:600px;margin:auto;font-family:Arial,sans-serif;padding:20px;background:#f7f7f9;border-radius:8px;border:1px solid #e0e0e0;">
+  
+  <div style="text-align:center;margin-bottom:20px;">
+    <h1 style="color:#4f46e5;margin:0;font-size:24px;">Desynefy</h1>
+    <p style="color:#555;font-size:14px;margin:5px 0 0;">Password Reset Request</p>
+  </div>
+
+  <div style="padding:20px;background:#ffffff;border-radius:8px;border:1px solid #ddd;">
+    <p style="color:#333;font-size:16px;">Hello <strong>${
+      user.name
+    }</strong>,</p>
+    <p style="color:#333;font-size:16px;">We received a request to reset your password. Your new password is:</p>
+
+    <p style="text-align:center;margin:20px 0;">
+      <span style="display:inline-block;background-color:#4f46e5;color:#ffffff;font-size:18px;padding:10px 20px;border-radius:5px;font-weight:bold;">
+        ${newPassword}
+      </span>
+    </p>
+
+    <p style="color:#333;font-size:16px;">Please log in using this password .</p>
+
+    <p style="color:#888;font-size:14px;margin-top:20px;">If you did not request a password reset, please ignore this email or contact our support team.</p>
+  </div>
+
+  <div style="text-align:center;margin-top:20px;color:#555;font-size:12px;">
+    &copy; ${new Date().getFullYear()} Desynefy. All rights reserved.
+  </div>
+</div>`;
 
     await brevo.sendTransacEmail(sendSmtpEmail);
 
