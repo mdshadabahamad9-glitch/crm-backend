@@ -5,6 +5,8 @@ const authRoutes = require("./auth");
 const Brevo = require("@getbrevo/brevo");
 const { jsPDF } = require("jspdf");
 const { autoTable } = require("jspdf-autotable");
+const userRoutes = require("./settings"); // 👈 add this line
+
 
 
 
@@ -307,6 +309,7 @@ app.post("/api/invoices/add", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+app.use("/api/user", userRoutes); // 👈 mount it
 
 
 
